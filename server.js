@@ -1,7 +1,6 @@
 const { GraphQLServer, PubSub} = require("graphql-yoga");
 const {MONGODB} = require('./config.js');
 const mongoose = require('mongoose');
-const { createError } = require('graphql/error/formatError');
 
 // Posts 
 const Post = require('./models/Post');
@@ -52,6 +51,7 @@ const typeDefs = `
         id: ID!
         user: String!
         content: String!
+        createdAt: String!
     }
     type User{
         id:ID!
@@ -97,7 +97,19 @@ const resolvers = {
         commentCount: (parent) => parent.comments.length
     },
   Query: {
-    messages: () => messages,
+   async messages (){
+        // const da =await Message.find().sort({createdAt:-1});
+        // da.map((daa)=> {
+        //     messages.push({
+        //         id:daa.id,
+        //         user:daa.username,
+        //         content: daa.content,
+        //         creaeted: daa.createdAt,
+        //     })
+        // })
+        return messages;
+        
+    },
     async getPosts(){
         try{
            const posts = await Post.find().sort({createdAt: -1});
@@ -112,10 +124,10 @@ const resolvers = {
            if(post){
                return post;
            } else { 
-               throw new createError('Post not found');
+               throw new Error('Post not found');
            }
        } catch(err) {
-           throw new createError('Post not found');
+           throw new Error('Post not found');
        }
       },
       async getMessages() {
@@ -147,6 +159,7 @@ const resolvers = {
         id: res.id,
         user: users.username,
         content,
+        createdAt: new Date().toISOString(),
       });
       subscribers.forEach((fn) => fn());
       return res.id;
@@ -156,6 +169,16 @@ const resolvers = {
     },
     async deleteMessage(_, {id, user},context){
       var c = 1;
+      const users = checkAuth(context);
+      const response = await Message.findById(id);
+      var mess = "";
+      if(response){
+      if(users.username ===user){
+          await response.delete();
+          mess = 'Post deleted successfully';        
+      }
+      else {throw new Error("Authorization Required")}
+    } else {throw new Error("Message not found!!")}
       messages.forEach((fn) => {
         if(fn.id==id && fn.user==user){
           // remove object
@@ -168,27 +191,28 @@ const resolvers = {
       }      
       });
       if(c==1){
-      return 'Error!'} else { 
-        return 'Post deleted successfully!!'
+      return mess ='Error!'} else { 
+        return mess
         }
     },
     async login(_, {username, password}){
         const {errors, valid} = validateLoginInput(username, password);
         const user = await User.findOne({username});
-        
+        // console.log("11",errors)
         if(!valid){
-            throw new createError('Errors', {errors});
+            throw new Error(errors);
         }
 
         if(!user){ 
             errors.general = 'Users not found';
-            throw new createError('User not found', {errors});
+            console.log(errors)
+            throw new Error(errors.general);
         }
         
         const match = await bcrypt.compare(password, user.password);
         if(!match){
             errors.general = 'Users not found';
-            throw new createError('User not found', {errors});
+            throw new Error({errors});
         }
 
         const token = generateToken(user);
