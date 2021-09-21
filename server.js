@@ -1,7 +1,7 @@
 const { GraphQLServer, PubSub} = require("graphql-yoga");
 const {MONGODB} = require('./config.js');
 const mongoose = require('mongoose');
-
+var { GraphQLError } = require('graphql');
 // Posts 
 const Post = require('./models/Post');
 const Message = require('./models/Message');
@@ -200,19 +200,19 @@ const resolvers = {
         const user = await User.findOne({username});
         // console.log("11",errors)
         if(!valid){
-            throw new Error(errors);
+            throw new Error([errors.username, errors.password]);
         }
 
         if(!user){ 
             errors.general = 'Users not found';
-            console.log(errors)
+            // console.log(errors)
             throw new Error(errors.general);
         }
         
         const match = await bcrypt.compare(password, user.password);
         if(!match){
             errors.general = 'Users not found';
-            throw new Error({errors});
+            throw new Error(errors.general);
         }
 
         const token = generateToken(user);
@@ -230,28 +230,23 @@ const resolvers = {
         {
         // Validate user data
         const { valid, errors } = validateRegisterInput(username, email, password, confirmPassword);
-        if(!valid){
-            throw new Error('Errors', {errors});
-        }
-        // make sure no duplicate users
-        
         const user = await User.findOne({ username });
         if(user){
-            throw new Error (`Error!! '${username}' is already taken`, {
-                errors : {
-                    username: `Error!! '${username}' is already taken`,
-                }
-            })
+            errors.username = `Error!! '${username}' is already taken`;
+            throw new Error (errors.username)
         }
         const checkEmail = await User.findOne({ email });
         if(checkEmail){
-            throw new Error (`Error!! '${email}' is already taken`, {
-                errors : {
-                    username: `Error!! '${email}' is already taken`,
-                }
-            })
+            errors.email = `Error!! '${email}' is already taken`;
+            throw new Error ([errors.username,errors.email])
         }
         // make sure no duplicate email addresses
+        if(!valid){
+            throw new Error([errors.username,errors.email,errors.password,errors.confirmPassword]);
+        }
+        // make sure no duplicate users
+        
+        
 
         // hashing passwords
          password = await bcrypt.hash(password,12);
