@@ -2,6 +2,10 @@ const { GraphQLServer, PubSub} = require("graphql-yoga");
 const {MONGODB} = require('./config.js');
 const mongoose = require('mongoose');
 var { GraphQLError } = require('graphql');
+
+// Machine learning .. using tensorflow
+require('@tensorflow/tfjs');
+const toxicity = require('@tensorflow-models/toxicity');
 // Posts 
 const Post = require('./models/Post');
 const Message = require('./models/Message');
@@ -147,6 +151,21 @@ const resolvers = {
   },
   Mutation: {
      async postMessage(_, { user, content },context) {
+        const threshold = 0.9;
+        toxicity.load(threshold).then(model => {
+            const sentences = [content];
+          
+            model.classify(sentences).then(predictions => {
+              console.log(predictions.map((pop) => {
+                    pop.results.map((popo)=> {
+                        if((pop.label === 'sexual_explicit' && popo.match===null) || (pop.label === 'sexual_explicit' && popo.match===true) ){
+                      console.log('warning')
+                  }
+                    })
+                 
+              }));
+            });
+          });
       const users = checkAuth(context);
       if(users.username===user){
       const newMessage = new Message({
