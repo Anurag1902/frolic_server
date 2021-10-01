@@ -27,6 +27,12 @@ function generateToken(user){
     );
 }
 
+async function delmess(id){
+    const response = await Message.findById(id);
+    await response.delete();
+    throw new Error("Toxic Message")
+}
+
 const messages = [];
 
 const typeDefs = `
@@ -151,6 +157,21 @@ const resolvers = {
   },
   Mutation: {
      async postMessage(_, { user, content },context) {
+        const users = checkAuth(context);
+        if(users.username===user){
+        const newMessage = new Message({
+            username: users.username,
+            content,
+            createdAt: new Date().toISOString(),
+        });
+        const res = await newMessage.save();
+        messages.push({
+          id: res.id,
+          user: users.username,
+          content,
+          createdAt: new Date().toISOString(),
+        });
+        subscribers.forEach((fn) => fn());
         const threshold = 0.9;
         toxicity.load(threshold).then(model => {
             const sentences = [content];
@@ -158,33 +179,28 @@ const resolvers = {
             model.classify(sentences).then(predictions => {
               console.log(predictions.map((pop) => {
                     pop.results.map((popo)=> {
-                        if(popo.match===null || popo.match===true){
-                      console.log('warning')
-                  }
+                        if(popo.match!==false){
+                            console.log("TOXZIC MESAGE")
+                            messages.forEach((fn) => {
+                                  // remove object
+                                  const removeIndex = messages.findIndex( item => item.id === fn.id );
+                                  // remove object
+                                  messages.splice( removeIndex, 1 );
+                                 subscribers.forEach((fn) => fn());
+                                  // return 'Message deleted successfully!';
+                                   delmess(res.id);
+                              });
+                    }
                     })
-                 
               }));
+              
             });
-          });
-      const users = checkAuth(context);
-      if(users.username===user){
-      const newMessage = new Message({
-          username: users.username,
-          content,
-          createdAt: new Date().toISOString(),
-      });
-      const res = await newMessage.save();
-      messages.push({
-        id: res.id,
-        user: users.username,
-        content,
-        createdAt: new Date().toISOString(),
-      });
-      subscribers.forEach((fn) => fn());
-      return res.id;
-    } else{
-        throw new Error("Authorization Required")
-    }
+        });
+        return res.id;
+      } else{
+          throw new Error("Authorization Required")
+      }
+       
     },
     async deleteMessage(_, {id, user},context){
       var c = 1;
