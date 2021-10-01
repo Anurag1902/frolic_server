@@ -158,7 +158,7 @@ const resolvers = {
             model.classify(sentences).then(predictions => {
               console.log(predictions.map((pop) => {
                     pop.results.map((popo)=> {
-                        if((pop.label === 'sexual_explicit' && popo.match===null) || (pop.label === 'sexual_explicit' && popo.match===true) ){
+                        if(popo.match===null || popo.match===true){
                       console.log('warning')
                   }
                     })
