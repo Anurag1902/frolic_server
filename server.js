@@ -150,9 +150,7 @@ const resolvers = {
                     content:da.content,
                 });
             });
-            // console.log(data);
             return data;
-        // return data;
       }
   },
   Mutation: {
@@ -187,7 +185,6 @@ const resolvers = {
                                   // remove object
                                   messages.splice( removeIndex, 1 );
                                  subscribers.forEach((fn) => fn());
-                                  // return 'Message deleted successfully!';
                                    delmess(res.id);
                               });
                     }
