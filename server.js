@@ -28,7 +28,6 @@ function generateToken(user){
 }
 
 async function delmess(id){
-    console.log(id)
     const response = await Message.findById(id);
     await response.delete();
     // throw new Error("Toxic Message")
@@ -179,12 +178,8 @@ const resolvers = {
               predictions.map((pop) => {
                     pop.results.map((popo)=> {
                         if(popo.match!==false){
-                            // console.log("TOXIC MESAGE")
-                            console.log("1",messages)
-                            
                                 const removeIndex = messages.findIndex( item => item.id === res.id );
                                   // remove object
-                                  console.log(removeIndex)
                                   if(removeIndex!==-1){
                                 messages.splice( removeIndex, 1 );
                                  subscribers.forEach((fn) => fn());
