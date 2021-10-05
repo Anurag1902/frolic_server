@@ -28,9 +28,10 @@ function generateToken(user){
 }
 
 async function delmess(id){
+    console.log(id)
     const response = await Message.findById(id);
     await response.delete();
-    throw new Error("Toxic Message")
+    // throw new Error("Toxic Message")
 }
 
 const messages = [];
@@ -175,21 +176,24 @@ const resolvers = {
             const sentences = [content];
           
             model.classify(sentences).then(predictions => {
-              console.log(predictions.map((pop) => {
+              predictions.map((pop) => {
                     pop.results.map((popo)=> {
                         if(popo.match!==false){
-                            console.log("TOXZIC MESAGE")
-                            messages.forEach((fn) => {
+                            // console.log("TOXIC MESAGE")
+                            console.log("1",messages)
+                            
+                                const removeIndex = messages.findIndex( item => item.id === res.id );
                                   // remove object
-                                  const removeIndex = messages.findIndex( item => item.id === fn.id );
-                                  // remove object
-                                  messages.splice( removeIndex, 1 );
+                                  console.log(removeIndex)
+                                  if(removeIndex!==-1){
+                                messages.splice( removeIndex, 1 );
                                  subscribers.forEach((fn) => fn());
-                                   delmess(res.id);
-                              });
+                                }
+                                delmess(res.id);
+                              
                     }
                     })
-              }));
+              });
               
             });
         });
