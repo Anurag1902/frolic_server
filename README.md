@@ -74,6 +74,7 @@ This project is built with the following frameworks:
 * [Graphql](https://graphql.org/)
 * [Apollo](https://www.apollographql.com/)
 * [MongoDB](https://www.mongodb.com/)
+* [Socket.io](https://socket.io/)
 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
