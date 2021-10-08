@@ -9,7 +9,7 @@ const toxicity = require('@tensorflow-models/toxicity');
 // Posts 
 const Post = require('./models/Post');
 const Message = require('./models/Message');
-
+const Room = require('./models/Room');
 // user 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -63,6 +63,13 @@ const typeDefs = `
         content: String!
         createdAt: String!
     }
+    type Room {
+        id: ID! 
+        username: String!
+        roomname: String!
+        createdAt: String!
+        messages: [Message]!
+    }
     type User{
         id:ID!
         email: String!
@@ -85,6 +92,7 @@ const typeDefs = `
     type Mutation {
         register(registerInput: RegisterInput) : User!   
         login(username: String!, password: String!) : User!
+        createRoom(username: String!, roomName: String!) : Room!
         createPost(body: String!) : Post!
         deletePost(postId: ID!): String!
         createComment(postId: String!, body: String!) : Post!
@@ -197,6 +205,16 @@ const resolvers = {
           throw new Error("Authorization Required")
       }
        
+    },
+    async createRoom(_, {username, roomName }, context){
+        const users = checkAuth(context);
+        const newRoom = new Room({
+            username: users.username, 
+            roomname: roomName,
+            createdAt: new Date().toISOString(),
+        })
+        const room  = await newRoom.save();
+        return room;
     },
     async deleteMessage(_, {id, user},context){
       var c = 1;
